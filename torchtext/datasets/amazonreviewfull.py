@@ -2,10 +2,12 @@ from torchtext.data.datasets_utils import (
     _RawTextIterableDataset,
     _wrap_split_argument,
     _add_docstring_header,
-    _download_extract_validate,
     _create_dataset_directory,
     _create_data_from_csv,
 )
+from torch.utils.data.datapipes.iter import HttpReader
+from torch.utils.data.datapipes.iter.readfilesfromtar import \
+    ReadFilesFromTarIterDataPipe as ReadFilesFromTar
 import os
 import logging
 
@@ -37,8 +39,9 @@ DATASET_NAME = "AmazonReviewFull"
 @_create_dataset_directory(dataset_name=DATASET_NAME)
 @_wrap_split_argument(('train', 'test'))
 def AmazonReviewFull(root, split):
-    path = _download_extract_validate(root, URL, MD5, os.path.join(root, _PATH), os.path.join(root, _EXTRACTED_FILES[split]),
-                                      _EXTRACTED_FILES_MD5[split], hash_type="md5")
+    buffers = HttpReader(args.url)
+    extracted_files = ReadFilesFromTar(buffers)
+    #TODO Caching mechanism
     logging.info('Creating {} data'.format(split))
     return _RawTextIterableDataset(DATASET_NAME, NUM_LINES[split],
                                    _create_data_from_csv(path))
